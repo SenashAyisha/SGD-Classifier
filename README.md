@@ -22,74 +22,43 @@ Developed by: SENASH AYISHA F
 RegisterNumber: 25018487 
 */
 import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import load_iris
 from sklearn.linear_model import SGDClassifier
-from sklearn.metrics import confusion_matrix, accuracy_score, classification_report
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-# ------------------------------
-# Step 1: Sample dataset
-# ------------------------------
-data = {
-    'Hours_Studied': [2, 3, 4, 5, 6, 7, 8, 9],
-    'Previous_Score': [40, 50, 55, 60, 65, 70, 75, 80],
-    'Internship': [0, 0, 1, 0, 1, 1, 1, 1],  # 0 = No, 1 = Yes
-    'Placement': [0, 0, 0, 1, 1, 1, 1, 1]    # Target: 0 = Not Placed, 1 = Placed
-}
+iris = load_iris()
 
-df = pd.DataFrame(data)
+df = pd.DataFrame(data=iris.data, columns=iris.feature_names)
+df['target'] = iris.target
 
-# ------------------------------
-# Step 2: Split into features and target
-# ------------------------------
-X = df[['Hours_Studied', 'Previous_Score', 'Internship']]
-y = df['Placement']
+print(df.head())
 
-# ------------------------------
-# Step 3: Train-test split
-# ------------------------------
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
+X = df.drop('target', axis=1)
+y = df['target']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# ------------------------------
-# Step 4: Feature scaling
-# ------------------------------
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
+sgd_clf = SGDClassifier(max_iter=1000, tol=1e-3)
 
-# ------------------------------
-# Step 5: Create and train SGDClassifier for Logistic Regression
-# ------------------------------
-sgd_model = SGDClassifier(loss='log_loss',       # 'log' loss → logistic regression
-                          max_iter=1000,
-                          learning_rate='optimal',
-                          random_state=42)
-sgd_model.fit(X_train, y_train)
+sgd_clf.fit(X_train, y_train)
 
-# ------------------------------
-# Step 6: Make predictions
-# ------------------------------
-y_pred = sgd_model.predict(X_test)
-y_prob = sgd_model.predict_proba(X_test)   # Probability of placement
+y_pred = sgd_clf.predict(X_test)
 
-# ------------------------------
-# Step 7: Evaluate the model
-# ------------------------------
-print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
-print("\nAccuracy Score:", accuracy_score(y_test, y_pred))
-print("\nClassification Report:\n", classification_report(y_test, y_pred))
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy: {accuracy:.3f}")
 
-# ------------------------------
-# Step 8: Predict placement for a new student
-# ------------------------------
-new_student = np.array([[6, 68, 1]])  # Example: 6 hours, 68 prev score, Internship yes
-new_student_scaled = scaler.transform(new_student)
-placement_pred = sgd_model.predict(new_student_scaled)
-placement_prob = sgd_model.predict_proba(new_student_scaled)
+cm = confusion_matrix(y_test, y_pred)
+print("Confusion Matrix:")
+print(cm)
 
-print(f"\nPredicted Placement Status: {'Placed' if placement_pred[0]==1 else 'Not Placed'}")
-print(f"Probability of Placement: {placement_prob[0][1]:.2f}")
+plt.figure(figsize=(6,4))
+sns.heatmap(cm, annot=True, cmap="Blues", fmt='d', xticklabels=iris.target_names, yticklabels=iris.target_names)
+plt.xlabel("Predicted Label")
+plt.ylabel("True Label")
+plt.title("Confusion Matrix")
+plt.show()
 ```
 
 ## Output:
